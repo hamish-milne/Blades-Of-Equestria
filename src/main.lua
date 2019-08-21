@@ -6,7 +6,9 @@ function love.load()
     love.graphics.setLineStyle('rough')
     width, height = love.graphics.getDimensions()
     scale = 2
-    canvas = love.graphics.newCanvas(width/scale, height/scale)
+    width = width / scale
+    height = height / scale
+    canvas = love.graphics.newCanvas(width, height)
 
     -- Load assets
     pony = love.graphics.newImage("pony.png")
@@ -30,6 +32,7 @@ uniform vec2 offset;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
+    screen_coords += offset;
     vec2 uv = vec2(
         int((2*screen_coords.y + screen_coords.x) / 32),
         int((2*screen_coords.y - screen_coords.x) / 32)
@@ -56,10 +59,20 @@ function love.update(dt)
     cx = math.floor(cx / scale)
     cy = math.floor(cy / scale)
     down = love.mouse.isDown(1)
+    mouse_uv = vector(to_uv(vector(cx, cy)))
 
     for i,actor in ipairs(actors) do
         actor:ai(dt)
     end
+
+    -- Screen borders
+    local border_px = 10
+    screen_border(0, 0, width, border_px, vector(0, -1))
+    screen_border(0, 0, border_px, height, vector(-1, 0))
+    screen_border(width-border_px, 0, border_px, height, vector(1, 0))
+    screen_border(0, height-border_px, width, border_px, vector(0, 1))
+    ground_shader:send("offset", {screen_offset.x, screen_offset.y})
+
 end
 
 function drawTile(tile, x, y)
@@ -93,6 +106,8 @@ function dashLine( p1, p2, dash, gap, offset )
     love.graphics.pop()
 end
 
+screen_offset = vector(0, 0)
+
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(50/255, 168/255, 82/255)
@@ -103,6 +118,10 @@ function love.draw()
     love.graphics.setShader(ground_shader)
     love.graphics.rectangle("fill", 0, 0, canvas:getWidth(), canvas:getHeight())
     love.graphics.setShader()
+
+    -- Begin world objects
+    love.graphics.push()
+    love.graphics.translate(-screen_offset.x, -screen_offset.y)
 
     -- Draw world UI elements
     -- TODO: Do this for player party
@@ -126,6 +145,9 @@ function love.draw()
     -- Draw pony
     for i,actor in ipairs(actors) do draw_actor(actor) end
 
+    love.graphics.pop()
+    -- End world objects
+
     if button(20, 100, 'A') then add_to_console("Clicked") end
 
     draw_console()
@@ -136,12 +158,19 @@ function love.draw()
 
     -- Reset flags
     if consume_click() then
-        local uv = vector(
-            (2*cy + cx) / 32,
-            (2*cy - cx) / 32
-        );
-        actors[1].target = uv
+        actors[1].target = mouse_uv
         actors[1].moving = true
+    end
+end
+
+function mouse_hover(x, y, width, height)
+    return (cx >= x and cx <= (x + width)) and (cy >= y and cy <= (y + height))
+end
+
+function screen_border(x, y, width, height, velocity)
+    if mouse_hover(x, y, width, height) then
+        velocity:mulInplace(3)
+        screen_offset:addInplace(velocity)
     end
 end
 
@@ -149,7 +178,7 @@ function button(x, y, text)
     love.graphics.setColor(1, 1, 1)
     local width = 24
     local height = 24
-    local hover = (cx >= x and cx <= (x + width)) and (cy >= y and cy <= (y + height))
+    local hover = mouse_hover(x, y, width, height)
     love.graphics.setLineWidth(2)
     love.graphics.draw(hover and (down and button_down or button_hover) or button_normal, x, y)
     love.graphics.print(text, x + 4, y)
@@ -177,6 +206,12 @@ function to_screen(vec)
     local x = (vec.x - vec.y) * 16
     local y = (vec.x + vec.y) * 8
     return x, y
+end
+
+function to_uv(vec)
+    local x = vec.x + screen_offset.x
+    local y = vec.y + screen_offset.y
+    return (2*y + x) / 32, (2*y - x) / 32
 end
 
 function draw_actor(actor)
@@ -210,8 +245,7 @@ function actor_ai(self, dt)
             self.angle = math.atan2(delta.x, delta.y)
         end
         delta:trimInplace(velocity * dt)
-        self.pos.x = self.pos.x + delta.x
-        self.pos.y = self.pos.y + delta.y
+        self.pos:addInplace(delta)
     end
 end
 

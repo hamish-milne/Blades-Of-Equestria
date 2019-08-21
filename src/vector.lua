@@ -205,6 +205,21 @@ function vector:trimmed(maxLen)
 	return self:clone():trimInplace(maxLen)
 end
 
+-- Stuff I added
+function vector:addInplace(a)
+    self.x = self.x + a.x
+    self.y = self.y + a.y
+end
+
+function vector:mulInplace(a)
+	if type(a) == "number" then
+		self.x = self.x * a
+		self.y = self.y * a
+	else
+		self.x = self.x * a.x
+		self.y = self.y * a.y
+	end
+end
 
 -- the module
 return setmetatable({

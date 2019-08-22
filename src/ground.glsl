@@ -1,6 +1,7 @@
 uniform Image map;
 uniform Image atlas;
 uniform vec2 offset;
+uniform float scale;
 
 const float tile_width = 32.0;
 const float tile_height = 16.0;
@@ -8,6 +9,7 @@ const float atlas_stride = 16.0;
 
 vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 {
+    screen_coords /= scale;
     screen_coords += offset;
     vec2 uv = vec2(
         floor((2.0*screen_coords.y + screen_coords.x) / 32.0),

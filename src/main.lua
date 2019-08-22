@@ -21,8 +21,6 @@ shader = {
 }
 setmetatable(shader, shader)
 
-scale = 2
-
 function love.resize(w, h)
     width = w / scale
     height = h / scale
@@ -31,6 +29,7 @@ end
 
 function love.load()
     -- Set up the canvas
+    scale = 2
     g.setDefaultFilter('nearest', 'nearest', 0)
     love.resize(g.getDimensions())
     g.setLineStyle('rough')
@@ -42,6 +41,7 @@ function love.load()
     ground_shader = shader.ground
     ground_shader:send('map', image.map)
     ground_shader:send('atlas', image.tiles)
+    ground_shader:send('scale', g.getDPIScale())
 
     selection_shader = shader.outline
     selection_shader:send('outline_color', {0, 1, 0, 1})
@@ -104,6 +104,7 @@ end
 screen_offset = vector(0, 0)
 
 function love.draw()
+
     love.graphics.setCanvas(canvas)
     love.graphics.clear(50/255, 168/255, 82/255)
     love.graphics.setColor(1, 1, 1)
@@ -113,6 +114,9 @@ function love.draw()
     love.graphics.setShader(ground_shader)
     love.graphics.rectangle("fill", 0, 0, canvas:getWidth(), canvas:getHeight())
     love.graphics.setShader()
+
+    love.graphics.draw(image.pony)
+    love.graphics.print(tostring(love.graphics.getDPIScale()), 0, 0)
 
     -- Begin world objects
     love.graphics.push()
@@ -151,6 +155,7 @@ function love.draw()
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(canvas, 0, 0, 0, scale)
+    love.graphics.draw(image.pony, 100)
 
     -- Reset flags
     if consume_click() then
@@ -234,7 +239,7 @@ function draw_actor(actor)
     elseif hover and consume_click(2) then
         actor_is_selected[actor] = nil
     end
-    love.graphics.draw(sprite, 0, 0)
+    love.graphics.draw(sprite)
     love.graphics.setShader()
     love.graphics.pop()
     draw_text(actor.name, x - 40, y - 45, 100)

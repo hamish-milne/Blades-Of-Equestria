@@ -1,0 +1,13 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: 'src' 
+    includeRootFolder: false 
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).love' 

@@ -9,7 +9,7 @@
             "type": "lua",
             "request": "launch",
             "stopOnEntry": false,
-            "runtimeExecutable": "C:\\Program Files\\LOVE\\lovec.exe",
+            "runtimeExecutable": "C:\\Program Files\\LOVE\\love.exe",
             "runtimeArgs": "--console src",
             "consoleCoding": "utf8"
         },
@@ -21,7 +21,7 @@
             "env": {
                 "LOVE_GRAPHICS_USE_OPENGLES": "1"
             },
-            "runtimeExecutable": "C:\\Program Files\\LOVE\\lovec.exe",
+            "runtimeExecutable": "C:\\Program Files\\LOVE\\love.exe",
             "runtimeArgs": "--console src",
             "consoleCoding": "utf8"
         }

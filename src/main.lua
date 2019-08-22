@@ -1,5 +1,5 @@
 local vector = require('vector')
---local world = require('world')
+local world = require('world')
 
 local g = love.graphics;
 
@@ -42,9 +42,11 @@ function love.load()
     ground_shader:send('map', image.map)
     ground_shader:send('atlas', image.tiles)
     ground_shader:send('scale', g.getDPIScale())
+    local map_explored, map_visible = world.setup_actor_sight()
+    ground_shader:send('explored', map_explored)
+    ground_shader:send('visible', map_visible)
 
     selection_shader = shader.outline
-    selection_shader:send('outline_color', {0, 1, 0, 1})
     selection_shader:send('size', {32, 32})
 end
 
@@ -105,8 +107,11 @@ screen_offset = vector(0, 0)
 
 function love.draw()
 
+    world.update_actor_sight()
+	g.setBlendMode('alpha')
+
     love.graphics.setCanvas(canvas)
-    love.graphics.clear(50/255, 168/255, 82/255)
+    love.graphics.clear(0, 0, 0)
     love.graphics.setColor(1, 1, 1)
 
 
@@ -115,8 +120,7 @@ function love.draw()
     love.graphics.rectangle("fill", 0, 0, canvas:getWidth(), canvas:getHeight())
     love.graphics.setShader()
 
-    love.graphics.draw(image.pony)
-    love.graphics.print(tostring(love.graphics.getDPIScale()), 0, 0)
+    love.graphics.print("Scale: "..love.graphics.getDPIScale(), 0, 0)
 
     -- Begin world objects
     love.graphics.push()
@@ -155,7 +159,6 @@ function love.draw()
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(canvas, 0, 0, 0, scale)
-    love.graphics.draw(image.pony, 100)
 
     -- Reset flags
     if consume_click() then
@@ -233,11 +236,16 @@ function draw_actor(actor)
     local hover = mouse_hover(0, 0, sprite:getWidth(), sprite:getHeight())
     if actor_is_selected[actor] or hover then
         love.graphics.setShader(selection_shader)
+        selection_shader:send('outline_color',
+            (actor_is_selected[actor] and hover) and {1, 0, 0, 1} or {0, 1, 0, 1}
+        )
     end
-    if hover and consume_click(1) then
-        actor_is_selected[actor] = true
-    elseif hover and consume_click(2) then
-        actor_is_selected[actor] = nil
+    if hover and consume_click() then
+        if actor_is_selected[actor] then
+            actor_is_selected[actor] = nil
+        else
+            actor_is_selected[actor] = true
+        end
     end
     love.graphics.draw(sprite)
     love.graphics.setShader()

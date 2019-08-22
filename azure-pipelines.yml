@@ -11,3 +11,4 @@ steps:
     includeRootFolder: false 
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).love' 
+- task: PublishPipelineArtifact@1

@@ -10,7 +10,7 @@
             "request": "launch",
             "stopOnEntry": true,
             "runtimeExecutable": "C:\\Program Files\\LOVE\\love.exe",
-            "runtimeArgs": "--console .",
+            "runtimeArgs": "--console src",
             "consoleCoding": "utf8"
         }
     ]

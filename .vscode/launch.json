@@ -9,7 +9,19 @@
             "type": "lua",
             "request": "launch",
             "stopOnEntry": false,
-            "runtimeExecutable": "C:\\Program Files\\LOVE\\love.exe",
+            "runtimeExecutable": "C:\\Program Files\\LOVE\\lovec.exe",
+            "runtimeArgs": "--console src",
+            "consoleCoding": "utf8"
+        },
+        {
+            "name": "Run GLES",
+            "type": "lua",
+            "request": "launch",
+            "stopOnEntry": false,
+            "env": {
+                "LOVE_GRAPHICS_USE_OPENGLES": "1"
+            },
+            "runtimeExecutable": "C:\\Program Files\\LOVE\\lovec.exe",
             "runtimeArgs": "--console src",
             "consoleCoding": "utf8"
         }

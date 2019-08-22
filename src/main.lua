@@ -1,5 +1,5 @@
 local vector = require('vector')
-local world = require('world')
+--local world = require('world')
 
 local g = love.graphics;
 

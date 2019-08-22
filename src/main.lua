@@ -51,6 +51,42 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
 
     ground_shader:send("map", map)
     ground_shader:send("atlas", tile_array)
+
+    selection_shader = love.graphics.newShader [[
+
+uniform vec4 outline_color;
+uniform vec2 size;
+
+float check(Image tex, vec2 coords, vec2 dir)
+{
+    return Texel(tex, coords + (dir / size)).a;
+}
+
+vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
+{
+    vec4 texturecolor = Texel(tex, texture_coords);
+    if (texturecolor.a > 0) {
+        return texturecolor * color;
+    }
+    float surround_alpha =
+        check(tex, texture_coords, vec2( 0,  1)) +
+        check(tex, texture_coords, vec2( 1,  0)) +
+        check(tex, texture_coords, vec2( 1,  1)) +
+        check(tex, texture_coords, vec2( 0, -1)) +
+        check(tex, texture_coords, vec2(-1,  0)) +
+        check(tex, texture_coords, vec2(-1, -1)) +
+        check(tex, texture_coords, vec2(-1,  1)) +
+        check(tex, texture_coords, vec2( 1, -1));
+    if (surround_alpha > 0) {
+        return outline_color;
+    }
+    return vec4(0, 0, 0, 0);
+}
+
+    ]]
+
+    selection_shader:send('outline_color', {0, 1, 0, 1})
+    selection_shader:send('size', {32, 32})
 end
 
 function love.update(dt)
@@ -83,8 +119,8 @@ function love.mousereleased( x, y, button, istouch, presses )
     released = button
 end
 
-function consume_click()
-    if released then
+function consume_click(require_button)
+    if released and (not require_button or released == require_button) then
         released = false
         return true
     end
@@ -124,22 +160,23 @@ function love.draw()
     love.graphics.translate(-screen_offset.x, -screen_offset.y)
 
     -- Draw world UI elements
-    -- TODO: Do this for player party
-    if actors[1].moving then
-        local px, py = to_screen(actors[1].target)
-        local sx, sy = to_screen(actors[1].pos)
-        local a = vector(px, py)
-        local b = vector(sx, sy)
+    for actor,v in pairs(actor_is_selected) do
+        if actor.moving then
+            local px, py = to_screen(actor.target)
+            local sx, sy = to_screen(actor.pos)
+            local a = vector(px, py)
+            local b = vector(sx, sy)
 
-        love.graphics.setColor(1, 0, 0)
-        love.graphics.circle('fill', px, py, 3)
-        love.graphics.setLineWidth(3)
-        dashLine(a, b, 10, 4, 0);
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.setLineWidth(2)
-        love.graphics.circle('line', px, py, 3)
-        love.graphics.setLineWidth(1)
-        dashLine(a, b, 10-2, 4+2, 1);
+            love.graphics.setColor(1, 0, 0)
+            love.graphics.circle('fill', px, py, 3)
+            love.graphics.setLineWidth(3)
+            dashLine(a, b, 10, 4, 0);
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.setLineWidth(2)
+            love.graphics.circle('line', px, py, 3)
+            love.graphics.setLineWidth(1)
+            dashLine(a, b, 10-2, 4+2, 1)
+        end
     end
 
     -- Draw pony
@@ -158,13 +195,16 @@ function love.draw()
 
     -- Reset flags
     if consume_click() then
-        actors[1].target = mouse_uv
-        actors[1].moving = true
+        for actor,v in pairs(actor_is_selected) do
+            actor.target = mouse_uv
+            actor.moving = true
+        end
     end
 end
 
 function mouse_hover(x, y, width, height)
-    return (cx >= x and cx <= (x + width)) and (cy >= y and cy <= (y + height))
+    local tx, ty = love.graphics.inverseTransformPoint(cx, cy)
+    return (tx >= x and tx <= (x + width)) and (ty >= y and ty <= (y + height))
 end
 
 function screen_border(x, y, width, height, velocity)
@@ -225,12 +265,24 @@ function draw_actor(actor)
     love.graphics.translate(x, y);
     if r % 2 == 1 then love.graphics.scale(-1, 1) end
     local sprite = r < 2 and pony or pony_back
-    love.graphics.draw(sprite,  - (sprite:getWidth() / 2),  - sprite:getHeight())
+    love.graphics.translate(- (sprite:getWidth() / 2),  - sprite:getHeight())
+    local hover = mouse_hover(0, 0, sprite:getWidth(), sprite:getHeight())
+    if actor_is_selected[actor] or hover then
+        love.graphics.setShader(selection_shader)
+    end
+    if hover and consume_click(1) then
+        actor_is_selected[actor] = true
+    elseif hover and consume_click(2) then
+        actor_is_selected[actor] = nil
+    end
+    love.graphics.draw(sprite, 0, 0)
+    love.graphics.setShader()
     love.graphics.pop()
     draw_text(actor.name, x - 40, y - 45, 100)
 end
 
 actors = {}
+actor_is_selected = {}
 function create_actor(actor)
     table.insert(actors, actor)
 end

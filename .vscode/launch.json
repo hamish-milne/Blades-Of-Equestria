@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "launch process",
+            "name": "Run",
             "type": "lua",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "runtimeExecutable": "C:\\Program Files\\LOVE\\love.exe",
             "runtimeArgs": "--console src",
             "consoleCoding": "utf8"

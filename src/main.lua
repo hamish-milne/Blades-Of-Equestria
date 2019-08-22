@@ -1,90 +1,49 @@
-local vector = require("vector")
+local vector = require('vector')
+local world = require('world')
+
+local g = love.graphics;
+
+image = {
+    __index = function(t, k)
+        local img = g.newImage(k..'.png')
+        rawset(t, k, img)
+        return img
+    end
+}
+setmetatable(image, image)
+
+shader = {
+    __index = function(t, k)
+        local s = love.graphics.newShader(love.filesystem.newFileData(k..'.glsl'))
+        rawset(t, k, s)
+        return s
+    end
+}
+setmetatable(shader, shader)
+
+scale = 2
+
+function love.resize(w, h)
+    width = w / scale
+    height = h / scale
+    canvas = g.newCanvas(width, height)
+end
 
 function love.load()
     -- Set up the canvas
-    love.graphics.setDefaultFilter("nearest", 'nearest', 0)
-    love.graphics.setLineStyle('rough')
-    width, height = love.graphics.getDimensions()
-    scale = 2
-    width = width / scale
-    height = height / scale
-    canvas = love.graphics.newCanvas(width, height)
+    g.setDefaultFilter('nearest', 'nearest', 0)
+    love.resize(g.getDimensions())
+    g.setLineStyle('rough')
 
-    -- Load assets
-    pony = love.graphics.newImage("pony.png")
-    pony_back = love.graphics.newImage("pony-back.png")
-
-    font = love.graphics.newFont(10, "mono")
-    love.graphics.setFont(font)
+    font = g.newFont(10, "mono")
+    g.setFont(font)
     -- TODO: Palette index for map
-    map = love.graphics.newImage("map.png")
 
-    button_normal = love.graphics.newImage("button.png")
-    button_down = love.graphics.newImage("button-down.png")
-    button_hover = love.graphics.newImage("button-hover.png")
+    ground_shader = shader.ground
+    ground_shader:send('map', image.map)
+    ground_shader:send('atlas', image.tiles)
 
-    tile_array = love.graphics.newArrayImage({"grass.png", "grass-dry.png", "dirt-rocks.png"})
-    ground_shader = love.graphics.newShader [[
-
-uniform Image map;
-uniform ArrayImage atlas;
-uniform vec2 offset;
-
-vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-{
-    screen_coords += offset;
-    vec2 uv = vec2(
-        int((2*screen_coords.y + screen_coords.x) / 32),
-        int((2*screen_coords.y - screen_coords.x) / 32)
-    );
-    vec2 tile_origin = vec2(
-        (uv.x - uv.y) * 16,
-        (uv.x + uv.y) * 8
-    );
-    vec2 tile_uv = screen_coords - tile_origin;
-    
-    vec4 texturecolor = Texel(atlas, vec3( tile_uv.x/32 + 0.5, tile_uv.y/16, Texel(map, uv/128).b ) );
-    return texturecolor * color;
-}
-
-    ]]
-
-    ground_shader:send("map", map)
-    ground_shader:send("atlas", tile_array)
-
-    selection_shader = love.graphics.newShader [[
-
-uniform vec4 outline_color;
-uniform vec2 size;
-
-float check(Image tex, vec2 coords, vec2 dir)
-{
-    return Texel(tex, coords + (dir / size)).a;
-}
-
-vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
-{
-    vec4 texturecolor = Texel(tex, texture_coords);
-    if (texturecolor.a > 0) {
-        return texturecolor * color;
-    }
-    float surround_alpha =
-        check(tex, texture_coords, vec2( 0,  1)) +
-        check(tex, texture_coords, vec2( 1,  0)) +
-        check(tex, texture_coords, vec2( 1,  1)) +
-        check(tex, texture_coords, vec2( 0, -1)) +
-        check(tex, texture_coords, vec2(-1,  0)) +
-        check(tex, texture_coords, vec2(-1, -1)) +
-        check(tex, texture_coords, vec2(-1,  1)) +
-        check(tex, texture_coords, vec2( 1, -1));
-    if (surround_alpha > 0) {
-        return outline_color;
-    }
-    return vec4(0, 0, 0, 0);
-}
-
-    ]]
-
+    selection_shader = shader.outline
     selection_shader:send('outline_color', {0, 1, 0, 1})
     selection_shader:send('size', {32, 32})
 end
@@ -220,7 +179,7 @@ function button(x, y, text)
     local height = 24
     local hover = mouse_hover(x, y, width, height)
     love.graphics.setLineWidth(2)
-    love.graphics.draw(hover and (down and button_down or button_hover) or button_normal, x, y)
+    love.graphics.draw(hover and (down and image.button_down or image.button_hover) or image.button, x, y)
     love.graphics.print(text, x + 4, y)
     return hover and consume_click()
 end
@@ -264,7 +223,7 @@ function draw_actor(actor)
     love.graphics.push()
     love.graphics.translate(x, y);
     if r % 2 == 1 then love.graphics.scale(-1, 1) end
-    local sprite = r < 2 and pony or pony_back
+    local sprite = r < 2 and image.pony or image.pony_back
     love.graphics.translate(- (sprite:getWidth() / 2),  - sprite:getHeight())
     local hover = mouse_hover(0, 0, sprite:getWidth(), sprite:getHeight())
     if actor_is_selected[actor] or hover then

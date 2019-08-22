@@ -10,5 +10,7 @@ steps:
     rootFolderOrFile: 'src' 
     includeRootFolder: false 
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).love' 
+    archiveFile: '$(Build.ArtifactStagingDirectory)/BoE-$(Build.BuildId).love' 
 - task: PublishPipelineArtifact@1
+  inputs:
+    path: '$(Build.ArtifactStagingDirectory)/BoE-$(Build.BuildId).love'

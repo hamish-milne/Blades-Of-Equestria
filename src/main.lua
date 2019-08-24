@@ -1,5 +1,6 @@
 local vector = require('vector')
 local world = require('world')
+local palette = require('palette')
 
 local g = love.graphics;
 
@@ -39,7 +40,11 @@ function love.load()
     -- TODO: Palette index for map
 
     ground_shader = shader.ground
-    ground_shader:send('map', image.map)
+    local map_data = love.image.newImageData('map.png')
+    local vga_palette = palette('vga-13h.gpl')
+    vga_palette:convert(map_data)
+    local map_image = love.graphics.newImage(map_data)
+    ground_shader:send('map', map_image)
     ground_shader:send('atlas', image.tiles)
     ground_shader:send('scale', g.getDPIScale())
     local map_explored, map_visible = world.setup_actor_sight()
@@ -127,8 +132,8 @@ function love.draw()
     love.graphics.translate(-screen_offset.x, -screen_offset.y)
 
     -- Draw world UI elements
-    for actor,v in pairs(actor_is_selected) do
-        if actor.moving then
+    for i,actor in ipairs(player_party) do
+        if actor.moving and actor.selected then
             local px, py = to_screen(actor.target)
             local sx, sy = to_screen(actor.pos)
             local a = vector(px, py)
@@ -152,7 +157,7 @@ function love.draw()
     love.graphics.pop()
     -- End world objects
 
-    if button(20, 100, 'A') then add_to_console("Clicked") end
+    if button(20, 100, image.icon_sword) then add_to_console("Clicked") end
 
     draw_console()
 
@@ -162,9 +167,11 @@ function love.draw()
 
     -- Reset flags
     if consume_click() then
-        for actor,v in pairs(actor_is_selected) do
-            actor.target = mouse_uv
-            actor.moving = true
+        for i,actor in ipairs(player_party) do
+            if actor.selected then
+                actor.target = mouse_uv
+                actor.moving = true
+            end
         end
     end
 end
@@ -181,14 +188,14 @@ function screen_border(x, y, width, height, velocity)
     end
 end
 
-function button(x, y, text)
+function button(x, y, icon)
     love.graphics.setColor(1, 1, 1)
     local width = 24
     local height = 24
     local hover = mouse_hover(x, y, width, height)
     love.graphics.setLineWidth(2)
     love.graphics.draw(hover and (down and image.button_down or image.button_hover) or image.button, x, y)
-    love.graphics.print(text, x + 4, y)
+    love.graphics.draw(icon, x, y)
     return hover and consume_click()
 end
 
@@ -234,18 +241,14 @@ function draw_actor(actor)
     local sprite = r < 2 and image.pony or image.pony_back
     love.graphics.translate(- (sprite:getWidth() / 2),  - sprite:getHeight())
     local hover = mouse_hover(0, 0, sprite:getWidth(), sprite:getHeight())
-    if actor_is_selected[actor] or hover then
+    if actor.selected or hover then
         love.graphics.setShader(selection_shader)
         selection_shader:send('outline_color',
-            (actor_is_selected[actor] and hover) and {1, 0, 0, 1} or {0, 1, 0, 1}
+            (actor.selected and hover) and {1, 0, 0, 1} or {0, 1, 0, 1}
         )
     end
     if hover and consume_click() then
-        if actor_is_selected[actor] then
-            actor_is_selected[actor] = nil
-        else
-            actor_is_selected[actor] = true
-        end
+        actor.selected = not actor.selected
     end
     love.graphics.draw(sprite)
     love.graphics.setShader()
@@ -254,9 +257,14 @@ function draw_actor(actor)
 end
 
 actors = {}
-actor_is_selected = {}
+player_party = {}
 function create_actor(actor)
     table.insert(actors, actor)
+end
+
+function create_player_actor(actor)
+    table.insert(actors, actor)
+    table.insert(player_party, actor)
 end
 
 function actor_ai(self, dt)
@@ -273,7 +281,7 @@ function actor_ai(self, dt)
     end
 end
 
-create_actor {
+create_player_actor {
     name = 'I am a pony!',
     color = {0.8, 0.6, 1},
     pos = vector(8, 3),
@@ -282,11 +290,19 @@ create_actor {
     ai = actor_ai,
 }
 
-create_actor {
+create_player_actor {
     name = 'I am a pony too!',
     color = {0.6, 0.8, 1},
     pos = vector(13, 4),
     target = vector(13, 10),
     moving = true,
     ai = actor_ai
+}
+
+create_actor {
+    name = 'I am NPC',
+    color = {0.8, 0.3, 0.1},
+    pos = vector(20, 20),
+    ai = actor_ai,
+    angle = 0
 }

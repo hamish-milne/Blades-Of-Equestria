@@ -1,12 +1,14 @@
-local vector = require('vector')
-local world = require('world')
-local palette = require('palette')
+local vector = require 'vector'
+local vec = require 'vector-light'
+local world = require 'world'
+local palette = require 'palette'
 
 local g = love.graphics;
 
 image = {
     __index = function(t, k)
-        local img = g.newImage(k..'.png')
+        -- TODO: Register asset
+        local img = g.newImage('images/'..k..'.png')
         rawset(t, k, img)
         return img
     end
@@ -15,7 +17,8 @@ setmetatable(image, image)
 
 shader = {
     __index = function(t, k)
-        local s = love.graphics.newShader(love.filesystem.newFileData(k..'.glsl'))
+        -- TODO: Register asset
+        local s = love.graphics.newShader(love.filesystem.newFileData('shaders/'..k..'.glsl'))
         rawset(t, k, s)
         return s
     end
@@ -40,7 +43,7 @@ function love.load()
     -- TODO: Palette index for map
 
     ground_shader = shader.ground
-    local map_data = love.image.newImageData('map.png')
+    local map_data = love.image.newImageData('images/map.png')
     local vga_palette = palette('vga-13h.gpl')
     vga_palette:convert(map_data)
     local map_image = love.graphics.newImage(map_data)
@@ -61,7 +64,7 @@ function love.update(dt)
     cx = math.floor(cx / scale)
     cy = math.floor(cy / scale)
     down = love.mouse.isDown(1)
-    mouse_uv = vector(to_uv(vector(cx, cy)))
+    mouse_uv = vector(to_uv(cx, cy))
 
     for i,actor in ipairs(actors) do
         actor:ai(dt)
@@ -134,18 +137,16 @@ function love.draw()
     -- Draw world UI elements
     for i,actor in ipairs(player_party) do
         if actor.moving and actor.selected then
-            local px, py = to_screen(actor.target)
-            local sx, sy = to_screen(actor.pos)
-            local a = vector(px, py)
-            local b = vector(sx, sy)
+            local a = vector(to_screen(actor.target:unpack()))
+            local b = vector(to_screen(actor.pos:unpack()))
 
             love.graphics.setColor(1, 0, 0)
-            love.graphics.circle('fill', px, py, 3)
+            love.graphics.circle('fill', a.x, a.y, 3)
             love.graphics.setLineWidth(3)
             dashLine(a, b, 10, 4, 0);
             love.graphics.setColor(1, 1, 1)
             love.graphics.setLineWidth(2)
-            love.graphics.circle('line', px, py, 3)
+            love.graphics.circle('line', a.x, a.y, 3)
             love.graphics.setLineWidth(1)
             dashLine(a, b, 10-2, 4+2, 1)
         end
@@ -216,21 +217,21 @@ function add_to_console(line)
     console_text = console_text..line..'\n'
 end
 
-function to_screen(vec)
-    local x = (vec.x - vec.y) * 16
-    local y = (vec.x + vec.y) * 8
-    return x, y
+function to_screen(x, y)
+    local x1 = (x - y) * 16
+    local y1 = (x + y) * 8
+    return x1, y1
 end
 
-function to_uv(vec)
-    local x = vec.x + screen_offset.x
-    local y = vec.y + screen_offset.y
-    return (2*y + x) / 32, (2*y - x) / 32
+function to_uv(x, y)
+    local x1 = x + screen_offset.x
+    local y1 = y + screen_offset.y
+    return (2*y1 + x1) / 32, (2*y1 - x1) / 32
 end
 
 function draw_actor(actor)
     love.graphics.setColor(unpack(actor.color))
-    local x, y = to_screen(actor.pos)
+    local x, y = to_screen(actor.pos:unpack())
 
     local r = math.deg(actor.angle + 45)
     if r < 0 then r = r + 360 end

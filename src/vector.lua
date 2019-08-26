@@ -206,6 +206,11 @@ function vector:trimmed(maxLen)
 end
 
 -- Stuff I added
+function vector:set(x, y)
+	self.x = x
+	self.y = y
+end
+
 function vector:addInplace(a)
     self.x = self.x + a.x
     self.y = self.y + a.y

@@ -12,11 +12,11 @@ end
 function actor:apply_stat_mods(name, base)
     local value = base
     for i,effect in ipairs(self.effects) do
-        if effect[k] then
-            if type(effect[k]) == 'number' then
-                value = value + effect[k]
+        if effect[name] then
+            if type(effect[name]) == 'number' then
+                value = value + effect[name]
             else
-                value = effect[k](actor, value)
+                value = effect[name](actor, value)
             end
         end
     end
@@ -27,8 +27,8 @@ function actor.__index(t, k)
 end
 
 function actor:has_effect(effect)
-    for i,v in ipairs(self.effects)
-        if v.effect == effect
+    for i,v in ipairs(self.effects) do
+        if v.effect == effect then
             return true
         end
     end
@@ -36,3 +36,5 @@ function actor:has_effect(effect)
 end
 
 function actor:damage()
+
+end

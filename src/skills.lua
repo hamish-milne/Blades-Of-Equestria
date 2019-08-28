@@ -2,7 +2,7 @@ local skills = {}
 local effects = require 'effects'
 
 skills.hoof_strike = {
-    target = {'foe' = 1},
+    target = {foe = 1},
     range = 1,
     cost = 1,
     test = function(self, actor, target)
@@ -50,9 +50,9 @@ skills.encourage = {
 }
 
 skills.comfort = {
-    target = {'ally' = 1}
-    range = 1
-    cost = 1
+    target = {ally = 1},
+    range = 1,
+    cost = 1,
     on_hit = function(self, actor, target)
         target:heal(actor.personality)
     end

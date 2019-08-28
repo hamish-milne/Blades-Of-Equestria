@@ -45,7 +45,7 @@ effects.burn = {
     turn_end = function(self, actor, value)
         actor:damage(5 * self.magnitude, set('fire', 'dot'))
     end
-}}
+}
 
 effects.freeze = {}
 
@@ -63,7 +63,7 @@ effects.regenerate = {
 
 effects.shock = {
     turn_end = function(self, actor)
-        for other in a:allies_in_range(3) do
+        for other in actor:allies_in_range(3) do
             other:damage(5 * self.magnitude, set('electric', 'dot'))
         end
     end

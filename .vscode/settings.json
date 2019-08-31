@@ -1,6 +1,7 @@
 {
     "Lua.diagnostics.globals": [
-        "love"
+        "love",
+        "class_commons"
     ],
     "Lua.runtime.version": "LuaJIT",
     "Lua.diagnostics.disable": [

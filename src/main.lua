@@ -1,29 +1,12 @@
+
+require 'util'
 local vector = require 'vector'
 local vec = require 'vector-light'
 local world = require 'world'
 local palette = require 'palette'
+local effects = require 'effects'
 
 local g = love.graphics;
-
-image = {
-    __index = function(t, k)
-        -- TODO: Register asset
-        local img = g.newImage('images/'..k..'.png')
-        rawset(t, k, img)
-        return img
-    end
-}
-setmetatable(image, image)
-
-shader = {
-    __index = function(t, k)
-        -- TODO: Register asset
-        local s = love.graphics.newShader(love.filesystem.newFileData('shaders/'..k..'.glsl'))
-        rawset(t, k, s)
-        return s
-    end
-}
-setmetatable(shader, shader)
 
 function love.resize(w, h)
     width = w / scale
@@ -183,7 +166,7 @@ function mouse_hover(x, y, width, height)
 end
 
 function screen_border(x, y, width, height, velocity)
-    if mouse_hover(x, y, width, height) then
+    if mouse_hover(x+1, y+1, width-3, height-3) then
         velocity:mulInplace(3)
         screen_offset:addInplace(velocity)
     end
@@ -254,7 +237,12 @@ function draw_actor(actor)
     love.graphics.draw(sprite)
     love.graphics.setShader()
     love.graphics.pop()
-    draw_text(actor.name, x - 40, y - 45, 100)
+    draw_text(actor.name, x - 40, y - 60, 100)
+    draw_effect(effects.defence_up(), x - 30, y - 45)
+end
+
+function draw_effect(effect, x, y)
+    love.graphics.draw(effect.icon, x, y)
 end
 
 actors = {}

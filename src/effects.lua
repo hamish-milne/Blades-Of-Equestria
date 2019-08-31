@@ -11,17 +11,18 @@ local effects = {}
 setmetatable(effects, {
     __newindex = function(t, k, v)
         v.__includes = {Effect}
+        v.icon = image[k]
         local class = Class(v)
         rawset(t, k, class)
-        bitser.registerClass(class, k)
+        bitser.registerClass(k, class)
     end
 })
 
-effects.health_up = {
-    health = function(self, actor, value)
-        return value * (1 + 0.1 * self.magnitude)
-    end
-}
+-- effects.health_up = {
+--     health = function(self, actor, value)
+--         return value * (1 + 0.1 * self.magnitude)
+--     end
+-- }
 
 effects.defence_up = {
     defence = function(self, actor, value)
@@ -53,7 +54,7 @@ effects.stun = {}
 
 effects.charm = {}
 
-effects.invisible = {}
+-- effects.invisible = {}
 
 effects.regenerate = {
     turn_end = function(self, actor)

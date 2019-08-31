@@ -24,7 +24,7 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
         (uv.x + uv.y) * tile_height
     ) / 2.0;
     vec2 tile_uv = (screen_coords - tile_origin) + vec2(tile_width/2.0, 0);
-    float tile_idx = floor(Texel(map, map_uv).r * 255);
+    float tile_idx = floor(Texel(map, map_uv).r * 255.0);
     vec2 tile_pixels = vec2(
         floor(mod(tile_idx, atlas_stride)) * tile_width,
         floor(tile_idx / atlas_stride) * tile_height
